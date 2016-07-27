@@ -54,6 +54,62 @@ function loadData() {
         $nytElem.append("<li>Error retrieving NY Times articles</li>");
     });
 
+
+    // load wikipedia links
+
+    var wikiAjaxURL = "http://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch="+city+"&prop=revisions|links&rvprop=content&callback=?";
+
+    var titles = [];
+
+    // get the titles
+    $.ajax({
+        url: wikiAjaxURL,
+        dataType: "json",
+        type: "GET",
+        success: function(data) {
+
+            if ("query" in data) {
+
+                $(data.query.search).each(function(key, value) {
+
+                    var thisTitle = $(this)[0].title;
+
+                    // instead of another ajax call to get pageid, could probably
+                    // link to directly like <a href="wikipedia.org/[title]"></a>
+                    var thisArticleAjax = "http://en.wikipedia.org/w/api.php?action=query&format=json&titles="+thisTitle+"&prop=revisions&rvprop=content&callback=?";
+                    
+                    $.ajax({
+                        url: thisArticleAjax,
+                        dataType: "json",
+                        type: "GET",
+                        success: function(data) {
+
+                            var thisID = "";
+
+                            for (var name in data.query.pages) {
+
+                                thisID = name.toString();
+                            }
+
+
+                            $wikiElem.append("<li><a href='http://en.wikipedia.org/?curid="+thisID+"'>"+data.query.pages[thisID].title+"</a></li>");
+                        }
+                    }).error(function(error) {
+
+                        $wikiElem.append("<li>Error retrieving Wikipedia link to '"+title[i]+"'</li>");
+                    });
+                });
+            }
+            else {
+
+                $wikiElem.append("<li>No Wikipedia pages matching '"+city+"'</li>");   
+            }    
+        }
+    }).error(function(error) {
+
+        $wikiElem.append("<li>Error retrieving Wikipedia links</li>");
+    });
+
     return false;
 };
 
